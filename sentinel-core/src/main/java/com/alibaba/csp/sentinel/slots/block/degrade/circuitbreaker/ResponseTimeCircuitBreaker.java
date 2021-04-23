@@ -89,7 +89,7 @@ public class ResponseTimeCircuitBreaker extends AbstractCircuitBreaker {
         if (currentState.get() == State.HALF_OPEN) {
             // In detecting request
             // TODO: improve logic for half-open recovery
-            if (rt > maxAllowedRt) {
+            if (rt > maxAllowedRt) { //maxAllowedRt= 最大RT
                 fromHalfOpenToOpen(1.0d);
             } else {
                 fromHalfOpenToClose();
@@ -101,13 +101,13 @@ public class ResponseTimeCircuitBreaker extends AbstractCircuitBreaker {
         long slowCount = 0;
         long totalCount = 0;
         for (SlowRequestCounter counter : counters) {
-            slowCount += counter.slowCount.sum();
-            totalCount += counter.totalCount.sum();
+            slowCount += counter.slowCount.sum(); //慢调用次数
+            totalCount += counter.totalCount.sum(); // 总调用次数
         }
-        if (totalCount < minRequestAmount) {
+        if (totalCount < minRequestAmount) { // minRequestAmount=最小请求数
             return;
         }
-        double currentRatio = slowCount * 1.0d / totalCount;
+        double currentRatio = slowCount * 1.0d / totalCount; // 慢调用比例=慢调用次数/总调用次数
         if (currentRatio > maxSlowRequestRatio) {
             transformToOpen(currentRatio);
         }

@@ -67,14 +67,14 @@ public abstract class AbstractCircuitBreaker implements CircuitBreaker {
     @Override
     public boolean tryPass(Context context) {
         // Template implementation.
-        if (currentState.get() == State.CLOSED) {
+        if (currentState.get() == State.CLOSED) { // 关闭的 正常的 熔断器没打开
             return true;
         }
-        if (currentState.get() == State.OPEN) {
+        if (currentState.get() == State.OPEN) { //已经熔断了
             // For half-open state we allow a request for probing.
             return retryTimeoutArrived() && fromOpenToHalfOpen(context);
-        }
-        return false;
+        } // nextRetryTimestamp = 等于刚才触发熔点时间点+熔断时长
+        return false; // retryTimeoutArrived返回true 熔断已经过去
     }
 
     /**
@@ -85,7 +85,7 @@ public abstract class AbstractCircuitBreaker implements CircuitBreaker {
     protected boolean retryTimeoutArrived() {
         return TimeUtil.currentTimeMillis() >= nextRetryTimestamp;
     }
-
+    /**  设置下一次熔断结束时间 */
     protected void updateNextRetryTimestamp() {
         this.nextRetryTimestamp = TimeUtil.currentTimeMillis() + recoveryTimeoutMs;
     }
@@ -102,7 +102,7 @@ public abstract class AbstractCircuitBreaker implements CircuitBreaker {
     }
 
     protected boolean fromOpenToHalfOpen(Context context) {
-        if (currentState.compareAndSet(State.OPEN, State.HALF_OPEN)) {
+        if (currentState.compareAndSet(State.OPEN, State.HALF_OPEN)) { // 修改半开
             notifyObservers(State.OPEN, State.HALF_OPEN, null);
             Entry entry = context.getCurEntry();
             entry.whenTerminate(new BiConsumer<Context, Entry>() {
@@ -130,8 +130,8 @@ public abstract class AbstractCircuitBreaker implements CircuitBreaker {
     }
 
     protected boolean fromHalfOpenToOpen(double snapshotValue) {
-        if (currentState.compareAndSet(State.HALF_OPEN, State.OPEN)) {
-            updateNextRetryTimestamp();
+        if (currentState.compareAndSet(State.HALF_OPEN, State.OPEN)) { //熔断打开
+            updateNextRetryTimestamp(); // 设置熔断结束时间
             notifyObservers(State.HALF_OPEN, State.OPEN, snapshotValue);
             return true;
         }
@@ -139,8 +139,8 @@ public abstract class AbstractCircuitBreaker implements CircuitBreaker {
     }
 
     protected boolean fromHalfOpenToClose() {
-        if (currentState.compareAndSet(State.HALF_OPEN, State.CLOSED)) {
-            resetStat();
+        if (currentState.compareAndSet(State.HALF_OPEN, State.CLOSED)) { // 半开改为关闭
+            resetStat(); // 数据重置
             notifyObservers(State.HALF_OPEN, State.CLOSED, null);
             return true;
         }

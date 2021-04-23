@@ -44,7 +44,7 @@ public class DegradeSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
 
         fireEntry(context, resourceWrapper, node, count, prioritized, args);
     }
-
+    // 熔断器CircuitBreaker  重要!!!
     void performChecking(Context context, ResourceWrapper r) throws BlockException {
         List<CircuitBreaker> circuitBreakers = DegradeRuleManager.getCircuitBreakers(r.getName());
         if (circuitBreakers == null || circuitBreakers.isEmpty()) {

@@ -64,7 +64,7 @@ public interface CircuitBreaker {
          * In {@code OPEN} state, all requests will be rejected until the next recovery time point.
          */
         OPEN,
-        /**
+        /** 半开状态
          * In {@code HALF_OPEN} state, the circuit breaker will allow a "probe" invocation.
          * If the invocation is abnormal according to the strategy (e.g. it's slow), the circuit breaker
          * will re-transform to the {@code OPEN} state and wait for the next recovery time point;

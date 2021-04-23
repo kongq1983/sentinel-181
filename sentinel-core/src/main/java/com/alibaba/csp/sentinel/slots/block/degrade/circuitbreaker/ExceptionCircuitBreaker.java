@@ -70,9 +70,9 @@ public class ExceptionCircuitBreaker extends AbstractCircuitBreaker {
         Throwable error = entry.getError();
         SimpleErrorCounter counter = stat.currentWindow().value();
         if (error != null) {
-            counter.getErrorCount().add(1);
+            counter.getErrorCount().add(1); // 报错次数
         }
-        counter.getTotalCount().add(1);
+        counter.getTotalCount().add(1); //总调用次数
 
         handleStateChangeWhenThresholdExceeded(error);
     }
@@ -103,11 +103,11 @@ public class ExceptionCircuitBreaker extends AbstractCircuitBreaker {
             return;
         }
         double curCount = errCount;
-        if (strategy == DEGRADE_GRADE_EXCEPTION_RATIO) {
+        if (strategy == DEGRADE_GRADE_EXCEPTION_RATIO) { //策略  异常比例
             // Use errorRatio
             curCount = errCount * 1.0d / totalCount;
         }
-        if (curCount > threshold) {
+        if (curCount > threshold) { // threshold=异常数
             transformToOpen(curCount);
         }
     }
