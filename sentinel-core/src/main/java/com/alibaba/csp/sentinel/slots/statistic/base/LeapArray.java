@@ -63,12 +63,12 @@ public abstract class LeapArray<T> {
         AssertUtil.isTrue(intervalInMs > 0, "total time interval of the sliding window should be positive");
         AssertUtil.isTrue(intervalInMs % sampleCount == 0, "time span needs to be evenly divided");
 
-        this.windowLengthInMs = intervalInMs / sampleCount;
-        this.intervalInMs = intervalInMs;
-        this.intervalInSecond = intervalInMs / 1000.0;
-        this.sampleCount = sampleCount;
+        this.windowLengthInMs = intervalInMs / sampleCount; // 比如intervalInMs=1000  sampleCount=10 则每个区间是100ms
+        this.intervalInMs = intervalInMs; // 区间总毫秒
+        this.intervalInSecond = intervalInMs / 1000.0;  // 区间秒
+        this.sampleCount = sampleCount; // 比如intervalInMs=1000  sampleCount=10 则每个区间是100ms
 
-        this.array = new AtomicReferenceArray<>(sampleCount);
+        this.array = new AtomicReferenceArray<>(sampleCount); // 初始化间隔  总共多少个间隔
     }
 
     /**
@@ -98,9 +98,9 @@ public abstract class LeapArray<T> {
     protected abstract WindowWrap<T> resetWindowTo(WindowWrap<T> windowWrap, long startTime);
 
     private int calculateTimeIdx(/*@Valid*/ long timeMillis) {
-        long timeId = timeMillis / windowLengthInMs;
+        long timeId = timeMillis / windowLengthInMs; // windowLengthInMs=每个多少ms
         // Calculate current index so we can map the timestamp to the leap array.
-        return (int)(timeId % array.length());
+        return (int)(timeId % array.length()); // 落在那个时间窗格
     }
 
     protected long calculateWindowStart(/*@Valid*/ long timeMillis) {
@@ -145,14 +145,14 @@ public abstract class LeapArray<T> {
                  * succeed to update, while other threads yield its time slice.
                  */
                 WindowWrap<T> window = new WindowWrap<T>(windowLengthInMs, windowStart, newEmptyBucket(timeMillis));
-                if (array.compareAndSet(idx, null, window)) {
+                if (array.compareAndSet(idx, null, window)) { // 放到数组指定位置
                     // Successfully updated, return the created bucket.
                     return window;
                 } else {
                     // Contention failed, the thread will yield its time slice to wait for bucket available.
                     Thread.yield();
                 }
-            } else if (windowStart == old.windowStart()) {
+            } else if (windowStart == old.windowStart()) { // windowStart 比如 810  850 900 990 的windowStart都是800
                 /*
                  *     B0       B1      B2     B3      B4
                  * ||_______|_______|_______|_______|_______||___
@@ -165,7 +165,7 @@ public abstract class LeapArray<T> {
                  * that means the time is within the bucket, so directly return the bucket.
                  */
                 return old;
-            } else if (windowStart > old.windowStart()) {
+            } else if (windowStart > old.windowStart()) { // 跳到后面几格   然后替换当前第0个开始的格子
                 /*
                  *   (old)
                  *             B0       B1      B2    NULL      B4
@@ -194,7 +194,7 @@ public abstract class LeapArray<T> {
                     // Contention failed, the thread will yield its time slice to wait for bucket available.
                     Thread.yield();
                 }
-            } else if (windowStart < old.windowStart()) {
+            } else if (windowStart < old.windowStart()) { // 时间调整到过去时间
                 // Should not go through here, as the provided time is already behind.
                 return new WindowWrap<T>(windowLengthInMs, windowStart, newEmptyBucket(timeMillis));
             }
